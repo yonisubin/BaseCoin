@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Inventory</title>
+    <link rel="stylesheet" href="/static/navy-theme.css">
+    <style>
+        form.inline { display: inline; }
+        button { width: 5em; }
+        .add-form { margin-top: 2em; text-align: center; background: #f8f8f8;}
+        .add-form form {
+            display: inline-block;
+            border: 1px solid #ccc;
+            padding: 1em 2em;
+            border-radius: 8px;
+        }
+        .add-form input[type="text"],
+        .add-form input[type="number"] {
+            padding: 0.5em;
+            margin: 0 0.5em 0 0;
+            border: 1px solid #bbb;
+            border-radius: 4px;
+            width: 120px;
+        }
+        .add-form button {
+            padding: 0.5em 1.5em;
+            background: #223a5e;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .add-form button:hover {
+            background: #1a2d47;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <a href="/"><img src="../static/BaseLogo.png" alt="Logo" style="height: 100px; vertical-align: middle; float: left; margin:20px"></a>
+    <h1>Base Closet Inventory</h1>
+  </header>
+    <table>
+        <tr>
+            <th>Item</th>
+            <th>Quantity</th>
+            <th>Update</th>
+        </tr>
+        {% for item in items %}
+        <tr>
+            <td>{{ item.item_name }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>
+                <form class="inline" method="post" action="{{ url_for('update_inventory', item_id=item.id) }}">
+                    <input type="hidden" name="action" value="decrement">
+                    <button type="submit">-</button>
+                </form>
+                <form class="inline" method="post" action="{{ url_for('update_inventory', item_id=item.id) }}">
+                    <input type="hidden" name="action" value="increment">
+                    <button type="submit">+</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <div class="add-form">
+        <h2>Add New Item</h2>
+        <form method="post" action="{{ url_for('add_inventory') }}">
+            <input type="text" name="item_name" placeholder="Item name" required>
+            <input type="number" name="quantity" placeholder="Quantity" min="0" value="0" required>
+            <button type="submit">Add Item</button>
+        </form>
+    </div>
+</body>
+</html>

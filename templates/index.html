@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" href="/static/favicon.ico">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BaseCoin - Users</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f7f7f7;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      background-color: #4CAF50;
+      width: 100%;
+      padding: 20px 0;
+      text-align: center;
+      color: white;
+      font-size: 1.5rem;
+      font-weight: 500;
+    }
+
+    main {
+      max-width: 1000px;
+      width: 100%;
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    h2 {
+      color: #333;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 30px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      background-color: white;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+
+    .user-link {
+      color: #4CAF50;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    /* User form styling */
+    .user-form {
+      display: flex;
+      flex-direction: column;
+      max-width: 300px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .user-form input, .user-form button {
+      padding: 10px;
+      margin: 8px 0;
+      width: 100%;
+      box-sizing: border-box;
+      border: 2px solid #ccc;
+      border-radius: 5px;
+      font-size: 1rem;
+    }
+
+    button {
+      padding: 10px;
+      margin: 8px 0;
+      width: 100%;
+      box-sizing: border-box;
+      border: 2px solid #ccc;
+      border-radius: 5px;
+      font-size: 1rem;
+    }
+
+    .footer {
+      margin-top: 50px;
+      font-size: 0.9rem;
+      color: #888;
+      text-align: center;
+    }
+
+    @media (max-width: 768px) {
+      table, th, td {
+        font-size: 0.9rem;
+      }
+    }
+    .option-btn {
+      width: 45%;
+      display: inline;
+      float: center;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <a href="/"><img src="../static/BaseLogo.png" alt="Logo" style="height: 100px; vertical-align: middle; float: left; margin:20px"></a>
+    <h1>BaseCoin - Homepage</h1>
+  </header>
+
+  <main>
+    <div style="text-align: center; margin-bottom: 20px;">
+      <a href="/inventory"><button class="option-btn">View Inventory</button></a>
+      <a href="/users"><button class="option-btn">View All Users</button></a>
+      <a><button id="open-user-add-form" class="option-btn">Add User</button></a>
+    </div>
+    <div id="user-form" class="user-form" style="display: none;">
+      <h3>Add New User</h3>
+      <input type="text" id="newUserName" placeholder="Enter Name" required>
+      <input type="number" id="newUserPhone" placeholder="Enter Phone Number" required>
+      <input type="email" id="newUserEmail" placeholder="Enter Email" required>
+      <input type="text" id="newUserTeudatZihut" placeholder="Enter ID Number" required>
+      <input type="date" id="newUserDateOfBirth" placeholder="Enter Date of Birth (DD/MM/YYYY)" required>
+      <select id="newUserServiceStatus" required>
+        <option value="" disabled selected>Select Service Status</option>
+        <option value="Lone Soldier">Lone Soldier</option>
+        <option value="Post Service">Post Service</option>
+        <option value="Bnot Sheirt">Bnot Sheirt</option>
+        <option value="Other">Other</option>
+      </select>
+      <input type="checkbox" id="whatsapp-different">
+      <label for="whatsapp-different">Use different WhatsApp number</label>
+      <input type="text" id="newUserWhatsapp" placeholder="Enter WhatsApp Number" style="display: none;">
+      <script>
+        document.getElementById('whatsapp-different').addEventListener('change', function() {
+          document.getElementById('newUserWhatsapp').style.display = this.checked ? 'block' : 'none';
+        });
+      </script>
+      <button onclick="addUser()">Add User</button>
+    </div>
+    <script>
+      document.getElementById('open-user-add-form').addEventListener('click', function() {
+        document.getElementById('user-form').style.display = 'block';
+        document.getElementById('open-user-add-form').style.display = 'none';
+      });
+     </script>
+    <!-- Search for Users in table -->
+    <input type="text" id="searchInput" placeholder="Search Users..." onkeyup="filterUsers()">
+    <!-- User Table -->
+    <table id="userTable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Phone</th>
+          <th>Balance</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <!-- Reset User's Balances -->
+    <div class="form-container">
+      <!-- Only reset balances if admin password correct -->
+      <input type="password" id="adminPassword" placeholder="Enter Admin Password">
+      <button onclick="resetBalances()">Reset All Balances</button>
+    </div>
+  </main>
+
+  <div class="footer">
+    <p>&copy; 2025 Virtual Currency Broker. All rights reserved.</p>
+  </div>
+
+  <script>
+    // Load all users and their balances
+    async function loadUsers() {
+      const res = await fetch('/api/users');
+      const users = await res.json();
+      const tbody = document.querySelector('#userTable tbody');
+      tbody.innerHTML = ''; // Clear the table before adding new rows
+      console.log(users);
+      users.forEach(user => {
+        const row = `
+          <tr>
+            <td><a href="/user/${user.id}" class="user-link">${user.name}</a></td>
+            <td>${user.phone}</td>
+            <td>${user.balance.toFixed(2)}</td>
+          </tr>
+        `;
+        tbody.innerHTML += row;
+      });
+    }
+    // Filter users based on search input
+    function filterUsers() {
+      const input = document.getElementById('searchInput').value.toLowerCase();
+      const rows = document.querySelectorAll('#userTable tbody tr');
+      rows.forEach(row => {
+        const nameCell = row.querySelector('td:first-child');
+        const phoneCell = row.querySelector('td:nth-child(2)');
+        if (nameCell.textContent.toLowerCase().includes(input) || 
+            phoneCell.textContent.toLowerCase().includes(input)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+    // Add new user to the database
+    async function addUser() {
+      const userName = document.getElementById('newUserName').value;
+      const userPhone = document.getElementById('newUserPhone').value;
+      const userEmail = document.getElementById('newUserEmail').value;
+      const useWhatsapp = document.getElementById('whatsapp-different').checked;
+      const userTeudatZihut = document.getElementById('newUserTeudatZihut').value;
+      const userDateOfBirth = document.getElementById('newUserDateOfBirth').value;
+      const userServiceStatus = document.getElementById('newUserServiceStatus').value;
+      var userWhatsapp = '';
+      if( useWhatsapp ) {
+        userWhatsapp = document.getElementById('newUserWhatsapp').value;
+      } else {
+        userWhatsapp = userPhone; // Use phone number as WhatsApp if not specified
+      }
+      if (!userName) {
+        alert("Please enter a name!");
+        return;
+      } else if (!userPhone) {
+        alert("Please enter a phone number!");
+        return;
+      } else if (!userEmail) {
+        alert("Please enter an email!");
+        return;
+      } else if (useWhatsapp && !userWhatsapp) {
+        alert("Please enter a WhatsApp number!");
+        return;
+      }
+      console.log(JSON.stringify({ name: userName , phone: userPhone, 
+          email: userEmail, whatsapp: userWhatsapp, 
+          teudat_zihut: userTeudatZihut, date_of_birth: userDateOfBirth, 
+          service_status: userServiceStatus }))
+      const res = await fetch('/api/add_user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: userName , phone: userPhone, 
+          email: userEmail, whatsapp: userWhatsapp, 
+          teudat_zihut: userTeudatZihut, date_of_birth: userDateOfBirth, 
+          service_status: userServiceStatus })
+      });
+
+      if (res.ok) {
+        alert("User added successfully!");
+        loadUsers();  // Reload the user list
+        document.getElementById('newUserName').value = '';  // Clear input field
+        document.getElementById('newUserPhone').value = '';
+        document.getElementById('newUserEmail').value = '';
+        document.getElementById('newUserTeudatZihut').value = '';
+        document.getElementById('newUserDateOfBirth').value = '';
+        document.getElementById('newUserWhatsapp').value = '';
+        document.getElementById('user-form').style.display = 'none'; // Hide form after adding user
+        document.getElementById('open-user-add-form').style.display = 'block'; // Show the add user button again
+      } else {
+        alert("Failed to add user.");
+      }
+    }
+
+    async function removeUser(userId) {
+      const res = await fetch(`/api/remove_user/${userId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+
+      });
+
+      if (res.ok) {
+        alert("User removed successfully!");
+        loadUsers();  // Reload the user list
+      } else {
+        alert("Failed to remove user.");
+      }
+    }
+
+    // Reset all user balances
+    async function resetBalances() {
+      const res = await fetch('/api/reset_balances', {
+        method: 'POST',
+        body: JSON.stringify({
+          password: document.getElementById('adminPassword').value
+        }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (res.ok) {
+        alert("All balances have been reset to 200.");
+        loadUsers();  // Reload the user list
+      } else {
+        alert("Failed to reset balances.");
+        alert(res.statusText)
+      }
+    }
+
+    // Load users when the page loads
+    loadUsers();
+  </script>
+
+</body>
+<link rel="stylesheet" href="/static/navy-theme.css">
+</html>

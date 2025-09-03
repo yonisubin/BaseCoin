@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" href="/static/favicon.ico">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BaseCoin - All Users</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    /* Add your styles here */
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f7f7f7;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      background-color: #4CAF50;
+      width: 100%;
+      padding: 20px 0;
+      text-align: center;
+      color: white;
+      font-size: 1.5rem;
+      font-weight: 500;
+    }
+
+    main {
+      max-width: 1000px;
+      width: 100%;
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    h2 {
+      color: #333;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 30px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      background-color: white;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+
+    .user-link {
+      color: #4CAF50;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    /* User form styling */
+    .user-form {
+      display: flex;
+      flex-direction: column;
+      max-width: 300px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .user-form input, .user-form button {
+      padding: 10px;
+      margin: 8px 0;
+      width: 100%;
+      box-sizing: border-box;
+      border: 2px solid #ccc;
+      border-radius: 5px;
+      font-size: 1rem;
+    }
+
+    button {
+      padding: 10px;
+      margin: 8px 0;
+      width: 100%;
+      box-sizing: border-box;
+      border: 2px solid #ccc;
+      border-radius: 5px;
+      font-size: 1rem;
+    }
+
+    .footer {
+      margin-top: 50px;
+      font-size: 0.9rem;
+      color: #888;
+      text-align: center;
+    }
+
+    @media (max-width: 768px) {
+      table, th, td {
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+<a href="/"><img src="../static/BaseLogo.png" alt="Logo" style="height: 100px; vertical-align: middle; float: left; margin:20px"></a>
+    <h1>BaseCoin - All User Details</h1>
+  </header>
+
+  <main>
+
+    <h2>All Users</h2>
+    
+    <!-- Search for Users in table -->
+    <input type="text" id="searchInput" placeholder="Search Users..." onkeyup="filterUsers()">
+    <!-- User Table -->
+    <table id="userTable">
+      <thead>
+          <th>Teudat Zehut</th>
+          <th>Name</th>
+          <th>Balance</th>
+          <th>Birthday</th>
+          <th>Phone</th>
+          <th>Email</th>
+          <th>WhatsApp</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <!-- Reset User's Balances -->
+    <div class="form-container">
+      <button onclick="resetBalances()">Reset All Balances</button>
+      <!-- Only reset balances if admin password correct -->
+      <input type="password" id="adminPassword" placeholder="Enter Admin Password">
+    </div>
+  </main>
+
+  <div class="footer">
+    <p>&copy; 2025 Virtual Currency Broker. All rights reserved.</p>
+  </div>
+
+  <script>
+    // Load all users and their balances
+    async function loadUsers() {
+      const res = await fetch('/api/users');
+      const users = await res.json();
+      const tbody = document.querySelector('#userTable tbody');
+      tbody.innerHTML = ''; // Clear the table before adding new rows
+      users.forEach(user => {
+        console.log(user);
+        if(user.whatsapp == user.phone || user.whatsapp == null){
+            const row = `
+              <tr>
+                <td>${user.teudat_zihut}</td>
+                <td><a href="/user/${user.id}" class="user-link">${user.name}</a></td>
+                <td>${user.balance.toFixed(2)}</td>
+                <td>${user.date_of_birth}</td>
+                <td>${user.phone}</td>
+                <td>${user.email}</td>
+                <td>Same as phone</td>
+              </tr>
+            `;
+            tbody.innerHTML += row;
+        }else{
+            const row = `
+              <tr>
+                <td>${user.teudat_zihut}</td>
+                <td><a href="/user/${user.id}" class="user-link">${user.name}</a></td>
+                <td>${user.balance.toFixed(2)}</td>
+                <td>${user.date_of_birth}</td>
+                <td>${user.phone}</td>
+                <td>${user.email}</td>
+                <td>${user.whatsapp}</td>
+              </tr>
+            `;
+            tbody.innerHTML += row;
+        }
+      });
+    }
+    // Filter users based on search input
+    function filterUsers() {
+      const input = document.getElementById('searchInput').value.toLowerCase();
+      const rows = document.querySelectorAll('#userTable tbody tr');
+      rows.forEach(row => {
+        const nameCell = row.querySelector('td:nth-child(2)');
+        const phoneCell = row.querySelector('td:nth-child(5)');
+        if (nameCell.textContent.toLowerCase().includes(input) || 
+            phoneCell.textContent.toLowerCase().includes(input)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+    
+
+    // Reset all user balances
+    async function resetBalances() {
+      const res = await fetch('/api/reset_balances', {
+        method: 'POST',
+        body: JSON.stringify({
+          password: document.getElementById('adminPassword').value
+        }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (res.ok) {
+        alert("All balances have been reset to 200.");
+        loadUsers();  // Reload the user list
+      } else {
+        alert("Failed to reset balances.");
+        alert(res.statusText)
+      }
+    }
+
+    // Load users when the page loads
+    loadUsers();
+  </script>
+
+</body>
+<link rel="stylesheet" href="/static/navy-theme.css">
+</html>
