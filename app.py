@@ -98,6 +98,7 @@ def add_user():
         )
         db.session.add(new_user)
         db.session.commit()
+        print("New user added:", new_user.name)
         return jsonify({"message": "User added successfully!"}, 201)
     else:
         return jsonify({"message": "User name is required!"}), 400

@@ -307,6 +307,7 @@
 
       if (res.ok) {
         alert("Funds spent successfully!");
+        document.getElementById('amount').value = '';
         // Update balance dynamically or reload the page
         document.getElementById('userBalance').textContent = (userBalance - amount).toFixed(2);
       } else {
