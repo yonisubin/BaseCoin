@@ -1,0 +1,3 @@
+RESET_PASSWORD="password123"
+ADMIN_USERNAME="admin"
+ADMIN_PASSWORD_HASH="TheBaseRocks1!"

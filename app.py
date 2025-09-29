@@ -260,7 +260,7 @@ def login():
         password = request.form.get('password')
         print(f"Attempted login with username: {username} and password: {password}")
         admin = Admin.query.filter_by(username=username).first()
-        if admin and (check_password_hash(admin.password_hash, password) or password == ADMIN_PASSWORD_HASH or password == admin.password_hash):
+        if (admin and check_password_hash(admin.password_hash, password)) or (username == ADMIN_USERNAME and password == ADMIN_PASSWORD_HASH):
             session['logged_in'] = True
             session['admin_username'] = username  # <-- Store in session
             print("Admin logged in")
