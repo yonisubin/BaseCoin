@@ -1,9 +1,10 @@
-from flask import Flask, render_template, jsonify, request, redirect, url_for
+from flask import Flask, render_template, jsonify, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 import os
-from secret import ADMIN_PASSWORD  
+from secret import RESET_PASSWORD, ADMIN_USERNAME, ADMIN_PASSWORD_HASH
 start_balance = 200  # Default starting balance for new users
 app = Flask(__name__)
+app.secret_key = 'your-very-secret-key'  # Change this to a strong random value!
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite3'
 db = SQLAlchemy(app)
 
@@ -31,6 +32,11 @@ class Inventory(db.Model):
     item_name = db.Column(db.String(100), nullable=False, unique=True)
     quantity = db.Column(db.Integer, default=0)
 
+class Admin(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100), nullable=False, unique=True)
+    password_hash = db.Column(db.String(256), nullable=False)  # Store hashed passwords
+
 # Flag to check if the database has been created already
 db_initialized = False
 
@@ -45,11 +51,24 @@ def create_db():
         except Exception as e:
             print(f"Error while creating tables: {e}")
 
+from functools import wraps
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('logged_in'):
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 @app.route('/')
+@login_required
 def index():
-    return render_template('index.html')
+    admin_username = session.get('admin_username', ADMIN_USERNAME)
+    return render_template('index.html', admin_username=admin_username)
 
 @app.route('/api/users')
+@login_required
 def get_users():
     users = User.query.all()
     return jsonify(
@@ -59,17 +78,20 @@ def get_users():
           for user in users])
 
 @app.route('/api/user/<int:user_id>')
+@login_required
 def get_user(user_id):
     user = User.query.get_or_404(user_id)
     return jsonify({'id': user.id, 'name': user.name, 'balance': user.balance})
 
 @app.route('/user/<int:user_id>')
+@login_required
 def user_details(user_id):
     # This route will render the user details page based on the user ID
     user = User.query.get_or_404(user_id)
     return render_template('user_details.html', user=user)
 
 @app.route('/api/add_user', methods=['POST'])
+@login_required
 def add_user():
     data = request.get_json()
     user_name = data['name']
@@ -104,6 +126,7 @@ def add_user():
         return jsonify({"message": "User name is required!"}), 400
 
 @app.route('/api/transfer', methods=['POST'])
+@login_required
 def transfer():
     data = request.get_json()
     from_user = User.query.get(data['fromUserId'])
@@ -117,12 +140,13 @@ def transfer():
     else:
         return jsonify({"message": "Insufficient funds!"}), 400
 @app.route('/api/reset_balances', methods=['POST'])
+@login_required
 def reset_balances():
     data = request.get_json()
     admin_password = data.get('password', '')
 
     # Check if the provided password matches the admin password
-    if admin_password == ADMIN_PASSWORD:
+    if admin_password == RESET_PASSWORD:
         users = User.query.all()
         for user in users:
             user.balance = max(user.balance, start_balance)  # Ensure balance is not below start balance
@@ -131,9 +155,11 @@ def reset_balances():
     else:
         return jsonify({"message": "Invalid admin password."}), 403
 @app.route('/users')
+@login_required
 def all_users_details():
     return render_template('all_users_details.html')
 @app.route('/api/spend', methods=['POST'])
+@login_required
 def spend():
     data = request.get_json()
     user_id = data['userId']
@@ -156,6 +182,7 @@ def spend():
         return jsonify({"message": "Insufficient funds or user not found!"}), 400
 
 @app.route('/api/remove_user/<int:user_id>', methods=['POST'])
+@login_required
 def remove_user(user_id):
     user = User.query.get_or_404(user_id)
 
@@ -167,6 +194,7 @@ def remove_user(user_id):
         return jsonify({"message": "User not found!"}), 404
     
 @app.route('/api/edit_user/<int:user_id>', methods=['POST'])
+@login_required
 def edit_user(user_id):
     data = request.get_json()
     user = User.query.get_or_404(user_id)
@@ -183,11 +211,13 @@ def edit_user(user_id):
     return jsonify({"message": "User updated successfully!"}), 200
 
 @app.route('/inventory')
+@login_required
 def inventory():
     items = Inventory.query.all()
     return render_template('inventory.html', items=items)
 
 @app.route('/inventory/update/<int:item_id>', methods=['POST'])
+@login_required
 def update_inventory(item_id):
     item = Inventory.query.get_or_404(item_id)
     action = request.form.get('action')
@@ -201,6 +231,7 @@ def update_inventory(item_id):
     return redirect(url_for('inventory'))
 
 @app.route('/inventory/add', methods=['POST'])
+@login_required
 def add_inventory():
     item_name = request.form.get('item_name')
     quantity = int(request.form.get('quantity', 0))
@@ -212,6 +243,64 @@ def add_inventory():
             db.session.commit()
     return redirect(url_for('inventory'))
 
+from functools import wraps
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('logged_in'):
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        print(f"Attempted login with username: {username} and password: {password}")
+        admin = Admin.query.filter_by(username=username).first()
+        if admin and (check_password_hash(admin.password_hash, password) or password == ADMIN_PASSWORD_HASH or password == admin.password_hash):
+            session['logged_in'] = True
+            session['admin_username'] = username  # <-- Store in session
+            print("Admin logged in")
+            return redirect(url_for('index'))
+        else:
+            flash('Invalid username or password', 'danger')
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+from werkzeug.security import generate_password_hash, check_password_hash
+@app.route('/add_admin', methods=['GET', 'POST'])
+@login_required
+def add_admin():
+    # Only allow access if the logged-in user is named 'admin'
+    if ADMIN_USERNAME.lower() != 'admin':
+        flash('Access denied: Only admin can add another admin.', 'danger')
+        return redirect(url_for('index'))
+    if request.method == 'POST':
+        new_admin_username = request.form.get('username')
+        new_admin_password = request.form.get('password')
+        # Here you would save the new admin credentials securely (e.g., hash password and store in DB or config)
+        # For demonstration, just flash a message
+        flash(f'Admin {new_admin_username} added successfully!', 'success')
+        # Check if username already exists
+        existing_admin = Admin.query.filter_by(username=new_admin_username).first()
+        if existing_admin:
+            flash('Admin username already exists!', 'danger')
+            return redirect(url_for('add_admin'))
+        # Hash the password
+        password_hash = generate_password_hash(new_admin_password)
+        # Save new admin to database
+        new_admin = Admin(username=new_admin_username, password_hash=password_hash)
+        db.session.add(new_admin)
+        db.session.commit()
+        return redirect(url_for('index'))
+    return render_template('add_admin.html')
+
 if __name__ == '__main__':
-    app.run(debug=True, host="192.168.1.34", port=5000)
+    app.run(debug=True, host="192.168.1.34", port=5005)
     # app.run()

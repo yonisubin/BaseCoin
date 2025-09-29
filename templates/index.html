@@ -125,7 +125,8 @@
 
   <header>
     <a href="/"><img src="../static/BaseLogo.png" alt="Logo" style="height: 100px; vertical-align: middle; float: left; margin:20px"></a>
-    <h1>BaseCoin - Homepage</h1>
+    <h1>BaseCoin - Homepage!</h1>
+    <h3 id="named-welcome"></h3>
   </header>
 
   <main>
@@ -133,6 +134,7 @@
       <a href="/inventory"><button class="option-btn">View Inventory</button></a>
       <a href="/users"><button class="option-btn">View All Users</button></a>
       <a><button id="open-user-add-form" class="option-btn">Add User</button></a>
+      <a href="/logout"><button class="option-btn">Logout</button></a>
     </div>
     <div id="user-form" class="user-form" style="display: none;">
       <h3>Add New User</h3>
@@ -318,7 +320,14 @@
 
     // Load users when the page loads
     loadUsers();
+    window.onload = function() {
+    var adminName = "{{ admin_username }}";
+    if (adminName) {
+      document.getElementById('named-welcome').textContent = "Welcome, " + adminName + "!";
+    }
+  }
   </script>
+ 
 
 </body>
 <link rel="stylesheet" href="/static/navy-theme.css">
