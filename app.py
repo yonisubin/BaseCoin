@@ -307,5 +307,5 @@ def add_admin():
     return render_template('add_admin.html')
 
 if __name__ == '__main__':
-    app.run(debug=True, host="192.168.1.34", port=5005)
-    # app.run()
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
