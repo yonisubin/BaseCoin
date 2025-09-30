@@ -120,7 +120,7 @@ def add_user():
         )
         db.session.add(new_user)
         db.session.commit()
-        print("New user added:", new_user.name)
+        print(f"New user added by {session.get("admin_name")}:", new_user.name)
         return jsonify({"message": "User added successfully!"}, 201)
     else:
         return jsonify({"message": "User name is required!"}), 400
@@ -258,15 +258,14 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        print(f"Attempted login with username: {username} and password: {password}")
         admin = Admin.query.filter_by(username=username).first()
         # if admin and (check_password_hash(admin.password_hash, password) or 
         #               password == ADMIN_PASSWORD_HASH or password == admin.password_hash):
-        print(f"Admin from DB: {admin.username if admin else 'None'}")
         if (username==ADMIN_USERNAME and password==ADMIN_PASSWORD_HASH) or (admin and check_password_hash(admin.password_hash, password)):
             session['logged_in'] = True
+            session['admin_name'] = admin.username if admin else ADMIN_USERNAME
             session['admin_username'] = username  # <-- Store in session
-            print("Admin logged in")
+            print(f"Admin {admin.username} logged in")
             return redirect(url_for('index'))
         else:
             flash('Invalid username or password', 'danger')
@@ -302,7 +301,6 @@ def add_admin():
         new_admin = Admin(username=new_admin_username, password_hash=password_hash)
         db.session.add(new_admin)
         db.session.commit()
-        print("New admin added:", new_admin.username, new_admin_password)
         return redirect(url_for('index'))
     return render_template('add_admin.html')
 
