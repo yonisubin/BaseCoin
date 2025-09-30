@@ -64,7 +64,7 @@ def login_required(f):
 @app.route('/')
 @login_required
 def index():
-    admin_username = session.get('admin_username', ADMIN_USERNAME)
+    admin_username = session.get('admin_name', ADMIN_USERNAME)
     return render_template('index.html', admin_username=admin_username)
 
 @app.route('/api/users')
@@ -279,7 +279,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 @login_required
 def add_admin():
     # Only allow access if the logged-in user is named 'admin'
-    session_admin = session.get('admin_username', '')
+    session_admin = session.get('admin_name', '')
+    print(f"Current session admin: {session_admin}")
     if session_admin != 'admin':
         flash('Access denied: Only admin can add another admin.', 'danger')
         return redirect(url_for('index'))
