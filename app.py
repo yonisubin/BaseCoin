@@ -281,7 +281,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 @login_required
 def add_admin():
     # Only allow access if the logged-in user is named 'admin'
-    if ADMIN_USERNAME.lower() != 'admin':
+    session_admin = session.get('admin_username', '')
+    if session_admin != 'admin':
         flash('Access denied: Only admin can add another admin.', 'danger')
         return redirect(url_for('index'))
     if request.method == 'POST':
