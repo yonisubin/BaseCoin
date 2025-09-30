@@ -264,8 +264,7 @@ def login():
         if (username==ADMIN_USERNAME and password==ADMIN_PASSWORD_HASH) or (admin and check_password_hash(admin.password_hash, password)):
             session['logged_in'] = True
             session['admin_name'] = admin.username if admin else ADMIN_USERNAME
-            session['admin_username'] = username  # <-- Store in session
-            print(f"Admin {admin.username} logged in")
+            print(f"Admin {admin.username if admin else ADMIN_USERNAME} logged in")
             return redirect(url_for('index'))
         else:
             flash('Invalid username or password', 'danger')
