@@ -50,6 +50,9 @@ h3 {
   font-size: 1.2rem;
   color: #1a2950;
 }
+#named-welcome {
+  color: #e6b800;
+}
 
 table {
   width: 100%;

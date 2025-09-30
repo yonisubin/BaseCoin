@@ -1,11 +1,11 @@
 from flask import Flask, render_template, jsonify, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 import os
-from secret import RESET_PASSWORD, ADMIN_USERNAME, ADMIN_PASSWORD_HASH
+from secret import RESET_PASSWORD, ADMIN_USERNAME, ADMIN_PASSWORD_HASH, SQL_PASSWORD
 start_balance = 200  # Default starting balance for new users
 app = Flask(__name__)
 app.secret_key = 'your-very-secret-key'  # Change this to a strong random value!
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite3'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql+psycopg2://neondb_owner:{SQL_PASSWORD}@ep-autumn-tree-ad4vxqzl-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
 db = SQLAlchemy(app)
 
 class User(db.Model):
@@ -260,7 +260,10 @@ def login():
         password = request.form.get('password')
         print(f"Attempted login with username: {username} and password: {password}")
         admin = Admin.query.filter_by(username=username).first()
-        if (admin and check_password_hash(admin.password_hash, password)) or (username == ADMIN_USERNAME and password == ADMIN_PASSWORD_HASH):
+        # if admin and (check_password_hash(admin.password_hash, password) or 
+        #               password == ADMIN_PASSWORD_HASH or password == admin.password_hash):
+        print(f"Admin from DB: {admin.username if admin else 'None'}")
+        if (username==ADMIN_USERNAME and password==ADMIN_PASSWORD_HASH) or (admin and check_password_hash(admin.password_hash, password)):
             session['logged_in'] = True
             session['admin_username'] = username  # <-- Store in session
             print("Admin logged in")
@@ -298,6 +301,7 @@ def add_admin():
         new_admin = Admin(username=new_admin_username, password_hash=password_hash)
         db.session.add(new_admin)
         db.session.commit()
+        print("New admin added:", new_admin.username, new_admin_password)
         return redirect(url_for('index'))
     return render_template('add_admin.html')
 
